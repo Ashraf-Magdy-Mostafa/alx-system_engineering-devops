@@ -1,4 +1,4 @@
-# 0x03. Shell, init files, variables and expansions
+# alx-system_engineering-devops. Shell, init files, variables and expansions
 
 This project covers key concepts of shell initialization files, variables, expansions, and simple bash scripting.
 
