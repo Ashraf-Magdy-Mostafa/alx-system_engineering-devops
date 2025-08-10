@@ -1,0 +1,54 @@
+# Simple One-Server Web Infrastructure
+
+## Overview
+
+This setup describes a basic web infrastructure using one server for the website `www.foobar.com`:
+- 1 Linux server (IP: 8.8.8.8)
+- Nginx as the web server
+- Application server (e.g., Gunicorn with Django)
+- MySQL Database
+- Application codebase
+
+---
+
+## How It Works
+
+1. User accesses `www.foobar.com`.
+2. DNS A record resolves `www.foobar.com` to `8.8.8.8`.
+3. The server handles the request:
+    - **Nginx** processes HTTP/HTTPS traffic.
+    - Dynamic requests go to the **application server** (e.g., Gunicorn).
+    - The application interacts with **MySQL** for data.
+    - Response is returned to the user via Nginx.
+
+---
+
+## Roles of Components
+
+| Component           | Role                                                                       |
+|---------------------|----------------------------------------------------------------------------|
+| Server              | Hosts all services (web, app, DB)                                          |
+| Domain Name         | Provides a human-friendly address, mapped to server IP via DNS             |
+| DNS A Record        | Points `www` to `8.8.8.8`                                                  |
+| Web Server (Nginx)  | Handles web traffic, serves static files, proxies dynamic requests         |
+| App Server          | Runs site logic (e.g., Django app), processes dynamic requests             |
+| Database (MySQL)    | Stores and retrieves structured data for the app                           |
+| Application Files   | The codebase (website or app)                                              |
+
+---
+
+## Communication
+
+- User’s computer and server communicate via HTTP/HTTPS (TCP/IP).
+
+---
+
+## Limitations
+
+- **Single Point of Failure (SPOF):** Server outage makes website unavailable.
+- **Downtime During Maintenance:** Updates or restarts cause temporary unavailability.
+- **Not Scalable:** Can’t handle heavy traffic increases.
+
+---
+
+

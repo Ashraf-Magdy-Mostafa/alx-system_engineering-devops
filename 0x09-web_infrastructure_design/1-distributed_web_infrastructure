@@ -1,80 +1,75 @@
-# Web Infrastructure: 2 Servers, HAProxy, Nginx, MySQL
+# Three-Server Web Infrastructure for www.foobar.com
 
-## Architecture Overview
+## Overview
 
-- **2 Servers:** Each runs a web server and application server.
-- **1 Load-Balancer (HAProxy):** Routes traffic between the two servers.
-- **1 Web Server (Nginx):** Installed on both servers, handles incoming HTTP(S) requests.
-- **1 Application Server:** Runs backend logic (e.g., Python/Gunicorn) on both servers.
-- **1 Set of Application Files:** Codebase deployed identically on both servers.
-- **1 Database (MySQL):** Configured as Primary-Replica (Master-Slave) cluster.
-
----
-
-## Explanation of Each Element
-
-### HAProxy Load Balancer
-- **Why Added:** Distributes requests to both servers, prevents overload, and improves redundancy.
-- **Distribution Algorithm:**  
-  Uses **Round Robin** — each request is sent to the next server in sequence, cycling through all servers evenly.
-- **Active-Active Setup:**  
-  Both servers handle traffic simultaneously for maximum resource usage.  
-  - **Active-Active:** All servers handle requests at the same time.  
-  - **Active-Passive:** Only one active server handles traffic, the other is on standby for failover.
-
-### Nginx Web Server
-- Handles HTTP(S) requests.
-- Serves static files.
-- Routes dynamic requests to the application server.
-
-### Application Server
-- Runs the backend business logic and dynamic content generation.
-
-### Application Files
-- Identical code deployed to both servers to ensure consistent responses.
-
-### MySQL Primary-Replica Cluster
-- **Primary Node:**  
-  Handles *all writes* (`INSERT`, `UPDATE`, `DELETE`) and critical reads. Acts as the authoritative data source.
-- **Replica Node(s):**  
-  Read-only copies of data from the Primary (asynchronous replication). Serves read queries to reduce Primary load.  
-  If the Primary fails, a Replica can be promoted to Primary.
-  
-**From the Application’s Perspective:**
-- Writes always go to the Primary.
-- Reads can be split between Primary and Replicas.
-- Replication delay may cause eventual consistency issues.
+This design separates the infrastructure into three servers to enhance scalability, availability, and fault tolerance:
+- 1 Load Balancer (HAProxy)
+- 1 Web Server (Nginx)
+- 1 Application Server
+- 1 Database Server (MySQL with Primary-Replica cluster)
+- Application files deployed on the application server
 
 ---
 
-## Key Issues with the Infrastructure
+## How the Infrastructure Works
 
-### Single Points of Failure (SPOF)
-- Single HAProxy instance → if it fails, entire service is unavailable.
-- Single Primary database → all writes fail if it goes down.
-- Non-redundant DNS/power/network.
-
-### Security Risks
-- **No Firewall:** Servers are exposed to attacks.
-- **No HTTPS:** Data is sent in plaintext, vulnerable to interception.
-
-### No Monitoring
-- Failures, attacks, or performance issues may go unnoticed until outage occurs.
+1. User requests `www.foobar.com`.
+2. DNS resolves `www.foobar.com` to the load balancer’s IP.
+3. HAProxy distributes incoming requests to the web server.
+4. Nginx handles HTTP/HTTPS traffic and forwards dynamic requests to the application server.
+5. The application server processes logic and communicates with the MySQL primary-replica database cluster.
+6. Responses flow back through Nginx and HAProxy to the user.
 
 ---
 
-## Summary Table
+## Added Elements and Their Purposes
 
-| Element          | Why Add?                        | Issue If Missing                 |
-|------------------|---------------------------------|----------------------------------|
-| Load Balancer    | Balances load, adds redundancy  | SPOF if not redundant            |
-| 2 Servers        | High availability, scaling      | One server overloads/fails site  |
-| Master-Replica DB| Data redundancy, read scaling   | Data loss, app fails on crash    |
-| Firewall         | Security                        | Prone to attacks                 |
-| HTTPS            | Secures traffic                 | Data exposed                     |
-| Monitoring       | Issue/event detection           | Failures go unnoticed            |
+| Element           | Purpose                                                                                         |
+|-------------------|------------------------------------------------------------------------------------------------|
+| Load Balancer     | Distributes traffic to avoid overload, provides fault tolerance                               |
+| Web Server       | Manages web traffic, serves static content, proxies dynamic requests                         |
+| Application Server| Executes backend code, processes business logic                                              |
+| Database Cluster  | Primary handles writes; replicas serve reads to improve performance and availability         |
 
 ---
 
+## Load Balancer Distribution Algorithm
 
+- **Round Robin:** Distributes requests evenly in a sequential manner to backend servers.
+- Other options include Weighted Round Robin, Least Connections, and Source IP Hash.
+
+---
+
+## Active-Active vs Active-Passive Load Balancer Setup
+
+- **Active-Active:** Multiple load balancers run simultaneously, sharing the traffic load for better resource use and seamless failover.
+- **Active-Passive:** One load balancer is active, while others stand by to take over if failure occurs, prioritizing reliability but may introduce failover delay.
+
+This design typically uses an **Active-Active** setup.
+
+---
+
+## Primary-Replica Database Cluster Explained
+
+| Node      | Role                                                                                         |
+|-----------|----------------------------------------------------------------------------------------------|
+| Primary   | Handles all write operations and replicates data changes to replicas                         |
+| Replica   | Handles read queries, offloading work from the primary and providing redundancy             |
+
+- Applications write only to the primary node.
+- Reads can be sent to replicas to improve scalability.
+
+---
+
+## Potential Issues
+
+- Single Points of Failure (SPOF):
+  - Load balancer can be a SPOF if no backup exists.
+  - Database primary node remains a SPOF for writes.
+- Security:
+  - No firewall configured exposes servers to threats.
+  - Lack of HTTPS means insecure data transmission.
+- No monitoring tools to detect outages or performance problems.
+
+---
 
