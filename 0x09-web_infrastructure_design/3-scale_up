@@ -1,0 +1,29 @@
+# Web Infrastructure with Separate Servers and HAProxy Load Balancer Cluster
+
+This infrastructure design features multiple dedicated servers for each major component of a web application and uses an HAProxy load balancer configured as a cluster for high availability and traffic distribution.
+
+---
+
+## Components and Explanations
+
+| Component                           | Description                                                                               | Reason for Addition                                                  |
+|-------------------------------------|-------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| **Load Balancer (HAProxy) Cluster** | Two (or more) HAProxy servers configured as a cluster for high availability and redundancy.| Balances traffic across servers; provides failover in case of failure. |
+| **Web Server**                      | Dedicated server running Nginx, handling HTTP/HTTPS requests and static content delivery.  | Separates static content and request management from app logic.      |
+| **Application Server**              | Dedicated server running backend application code (e.g., Django, Node.js).                 | Isolates business logic processing for efficiency and security.      |
+| **Database Server**                 | Dedicated server running MySQL or another database system.                                 | Optimizes data handling; improves data integrity and performance.    |
+
+---
+
+## Why These Elements Are Added
+
+- **Dedicated Servers for Each Role:**  
+  Splitting web, application, and database servers provides better resource allocation, security, and scalability. Each component can be maintained, optimized, and scaled independently.
+
+- **HAProxy Load Balancer Cluster:**  
+  A clustered configuration ensures uninterrupted access by providing failover and distributing user requests efficiently. If one load balancer fails, another automatically takes over.
+
+---
+
+## Communication Flow
+
