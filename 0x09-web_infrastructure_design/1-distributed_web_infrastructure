@@ -1,0 +1,80 @@
+# Web Infrastructure: 2 Servers, HAProxy, Nginx, MySQL
+
+## Architecture Overview
+
+- **2 Servers:** Each runs a web server and application server.
+- **1 Load-Balancer (HAProxy):** Routes traffic between the two servers.
+- **1 Web Server (Nginx):** Installed on both servers, handles incoming HTTP(S) requests.
+- **1 Application Server:** Runs backend logic (e.g., Python/Gunicorn) on both servers.
+- **1 Set of Application Files:** Codebase deployed identically on both servers.
+- **1 Database (MySQL):** Configured as Primary-Replica (Master-Slave) cluster.
+
+---
+
+## Explanation of Each Element
+
+### HAProxy Load Balancer
+- **Why Added:** Distributes requests to both servers, prevents overload, and improves redundancy.
+- **Distribution Algorithm:**  
+  Uses **Round Robin** — each request is sent to the next server in sequence, cycling through all servers evenly.
+- **Active-Active Setup:**  
+  Both servers handle traffic simultaneously for maximum resource usage.  
+  - **Active-Active:** All servers handle requests at the same time.  
+  - **Active-Passive:** Only one active server handles traffic, the other is on standby for failover.
+
+### Nginx Web Server
+- Handles HTTP(S) requests.
+- Serves static files.
+- Routes dynamic requests to the application server.
+
+### Application Server
+- Runs the backend business logic and dynamic content generation.
+
+### Application Files
+- Identical code deployed to both servers to ensure consistent responses.
+
+### MySQL Primary-Replica Cluster
+- **Primary Node:**  
+  Handles *all writes* (`INSERT`, `UPDATE`, `DELETE`) and critical reads. Acts as the authoritative data source.
+- **Replica Node(s):**  
+  Read-only copies of data from the Primary (asynchronous replication). Serves read queries to reduce Primary load.  
+  If the Primary fails, a Replica can be promoted to Primary.
+  
+**From the Application’s Perspective:**
+- Writes always go to the Primary.
+- Reads can be split between Primary and Replicas.
+- Replication delay may cause eventual consistency issues.
+
+---
+
+## Key Issues with the Infrastructure
+
+### Single Points of Failure (SPOF)
+- Single HAProxy instance → if it fails, entire service is unavailable.
+- Single Primary database → all writes fail if it goes down.
+- Non-redundant DNS/power/network.
+
+### Security Risks
+- **No Firewall:** Servers are exposed to attacks.
+- **No HTTPS:** Data is sent in plaintext, vulnerable to interception.
+
+### No Monitoring
+- Failures, attacks, or performance issues may go unnoticed until outage occurs.
+
+---
+
+## Summary Table
+
+| Element          | Why Add?                        | Issue If Missing                 |
+|------------------|---------------------------------|----------------------------------|
+| Load Balancer    | Balances load, adds redundancy  | SPOF if not redundant            |
+| 2 Servers        | High availability, scaling      | One server overloads/fails site  |
+| Master-Replica DB| Data redundancy, read scaling   | Data loss, app fails on crash    |
+| Firewall         | Security                        | Prone to attacks                 |
+| HTTPS            | Secures traffic                 | Data exposed                     |
+| Monitoring       | Issue/event detection           | Failures go unnoticed            |
+
+---
+
+
+
