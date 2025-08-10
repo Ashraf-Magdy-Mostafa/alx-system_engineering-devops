@@ -1,0 +1,68 @@
+# Secured and Monitored Three-Server Web Infrastructure for www.foobar.com
+
+## Overview
+
+This infrastructure design includes three servers and key security and monitoring components to provide a secure, encrypted, and observable hosting environment for the website www.foobar.com. The main added elements are:
+
+- **3 Firewalls** (one per server) to protect each server.
+- **1 SSL certificate** for HTTPS to serve encrypted traffic.
+- **3 Monitoring clients** integrated with a service like Sumo Logic to collect server metrics and logs.
+
+---
+
+## How It Works
+
+1. Users request `www.foobar.com`.
+2. DNS resolves the domain to the Load Balancer IP.
+3. Incoming traffic passes through **firewalls** on each server, filtering malicious or unauthorized traffic.
+4. The **load balancer** distributes traffic among web servers.
+5. **Nginx web server** processes HTTP/HTTPS requests, using the SSL certificate to serve content securely over **HTTPS**.
+6. The **application server** runs the backend application logic.
+7. The **MySQL database** handles data storage with a primary-replica setup.
+8. **Monitoring clients** on each server gather operational data (logs, metrics) and send it to a centralized monitoring service.
+
+---
+
+## Why These Additions Are Important
+
+| Element           | Why Included                                                                                              |
+|-------------------|----------------------------------------------------------------------------------------------------------|
+| **Firewalls (3)** | Protect each server as a gatekeeper by controlling inbound/outbound network traffic to block threats.    |
+| **SSL Certificate**| Encrypts data between users and servers, ensuring privacy, preventing tampering, and authenticating site.|
+| **Monitoring Clients**| Collect and transmit server health and performance data to detect issues early and improve reliability.|
+
+---
+
+## Specific Concepts Explained
+
+### Firewalls
+
+- **Role:** Firewalls monitor and control network traffic flowing into and out of your servers based on security rules to prevent unauthorized access and attacks. Having one on each server provides layered defense.
+
+### HTTPS Traffic
+
+- **Why HTTPS:** It encrypts communication, protecting user data from eavesdropping, tampering, and man-in-the-middle attacks. It also authenticates the server, increasing user trust.
+
+### Monitoring
+
+- **Purpose:** Monitoring tools track server health, performance metrics, logs, application behavior, and traffic patterns to allow proactive issue detection and troubleshooting.
+- **Data Collection:** Monitoring clients run on each server, collecting metrics (CPU, memory, disk, network), logs (web server, app, database), and send them securely to a centralized service like Sumo Logic.
+
+### Monitoring Web Server QPS (Queries Per Second)
+
+- To monitor QPS, configure your monitoring tool or log analysis system to parse web server access logs or metrics. Tools like Prometheus with exporters or log analytics platforms can calculate requests per second and alert on anomalies.
+
+---
+
+## Issues and Limitations
+
+| Issue                                  | Explanation                                                                                                        |
+|--------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| **Terminating SSL at Load Balancer**  | SSL termination at the load balancer decrypts traffic there, but then forwards it unencrypted internally, exposing data risks and requiring secure internal networks. |
+| **Single MySQL Write Server**          | Having only one primary write node creates a single point of failure for write operations, risking downtime if it fails.                 |
+| **All Servers with Same Components**  | Deploying web, app, and database on the same servers reduces fault isolation and scalability, increasing risk of overall failure and performance bottlenecks.  |
+
+---
+
+
+
